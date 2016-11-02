@@ -1,6 +1,7 @@
 package scut.carson_ho.demo_mipush;
 
 import android.content.Context;
+import android.os.Message;
 
 import com.xiaomi.mipush.sdk.ErrorCode;
 import com.xiaomi.mipush.sdk.MiPushClient;
@@ -62,16 +63,16 @@ public class Mipush_Broadcast extends PushMessageReceiver {
     public void onCommandResult(Context context, MiPushCommandMessage message) {
 
         String command = message.getCommand();
-        System.out.println(command );
+//        System.out.println(command );
 
 
         if (MiPushClient.COMMAND_REGISTER.equals(command)) {
             if (message.getResultCode() == ErrorCode.SUCCESS) {
                 //打印信息便于测试注册成功与否
-                System.out.println("注册成功");
+//                System.out.println("注册成功");
 
             } else {
-                System.out.println("注册失败");
+//                System.out.println("注册失败");
             }
         }
     }
@@ -82,16 +83,41 @@ public class Mipush_Broadcast extends PushMessageReceiver {
     public void onReceiveRegisterResult(Context context, MiPushCommandMessage message) {
 
         String command = message.getCommand();
-        System.out.println(command );
+        System.out.println("开始注册"+command );
 
         if (MiPushClient.COMMAND_REGISTER.equals(command)) {
             if (message.getResultCode() == ErrorCode.SUCCESS) {
 
                 //打印日志：注册成功
-                System.out.println("注册成功");
+                System.out.println("推送服务注册成功");
+                //广播是否已经注册了,2代表已注册
+                if(BaseActivity.broadcastNet_State == 2){
+
+                    //通过回调注销广播
+                    Message msg = BaseActivity.AppHandler.obtainMessage();
+                    msg.what = 3;
+                    BaseActivity.AppHandler.sendMessage(msg);
+
+                    //设置状态量:3 = 推送服务注册成功;1 = 广播还未注册(已被注销)
+                    BaseActivity.pushState = 3;
+                    BaseActivity.broadcastNet_State =1 ;
+
+                }else{
+                    System.out.println("结束");
+                    BaseActivity.pushState = 3;
+                    BaseActivity.broadcastNet_State =1 ;
+                }
             } else {
                 //打印日志：注册失败
                 System.out.println("注册失败");
+                BaseActivity.pushState = 2;
+                //通过回调延时注册广播
+                System.out.println("回调延时注册广播");
+                Message msg = BaseActivity.AppHandler.obtainMessage();
+                msg.what = 1;
+                BaseActivity.AppHandler.sendMessage(msg);
+
+
             }
         } else {
             System.out.println("其他情况"+message.getReason());
